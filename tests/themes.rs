@@ -55,7 +55,7 @@ fn test_backwards_compatibility() {
     Registry::default().with(ErrorLayer::default()).init();
 
     let spantrace = test_capture(42);
-    let colored_spantrace = format!("{}", color_spantrace::colorize(&spantrace));
+    let colored_spantrace = format!("{}", colorz_spantrace::colorize(&spantrace));
 
     let control_file_name = "theme_control.txt";
     let control_file_path = ["tests/data/", control_file_name].concat();

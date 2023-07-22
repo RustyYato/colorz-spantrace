@@ -67,7 +67,6 @@
     rust_2018_idioms,
     unreachable_pub,
     bad_style,
-    const_err,
     dead_code,
     improper_ctypes,
     non_shorthand_field_patterns,
@@ -83,8 +82,10 @@
     unused_parens,
     while_true
 )]
+use colorz::ansi;
+use colorz::Colorize;
+use colorz::Style;
 use once_cell::sync::OnceCell;
-use owo_colors::{style, Style};
 use std::env;
 use std::fmt;
 use std::fs::File;
@@ -94,7 +95,7 @@ use tracing_error::SpanTrace;
 static THEME: OnceCell<Theme> = OnceCell::new();
 
 /// A struct that represents theme that is used by `color_spantrace`
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone)]
 pub struct Theme {
     file: Style,
     line_number: Style,
@@ -105,31 +106,51 @@ pub struct Theme {
 
 impl Theme {
     /// Create blank theme
-    pub fn new() -> Self {
-        Self::default()
+    pub const fn new() -> Self {
+        const DEFAULT_STYLE: Style = Style::new().const_into_runtime_style();
+        const NEW: Theme = Theme {
+            file: DEFAULT_STYLE,
+            line_number: DEFAULT_STYLE,
+            target: DEFAULT_STYLE,
+            fields: DEFAULT_STYLE,
+            active_line: DEFAULT_STYLE,
+        };
+
+        NEW
     }
 
     /// A theme for a dark background. This is the default
-    pub fn dark() -> Self {
-        Self {
-            file: style().purple(),
-            line_number: style().purple(),
-            active_line: style().white().bold(),
-            target: style().bright_red(),
-            fields: style().bright_cyan(),
-        }
+    pub const fn dark() -> Self {
+        const NEW: Theme = Theme {
+            file: Style::new().fg(ansi::Magenta).const_into_runtime_style(),
+            line_number: Style::new().fg(ansi::Magenta).const_into_runtime_style(),
+            active_line: Style::new()
+                .fg(ansi::White)
+                .bold()
+                .const_into_runtime_style(),
+            target: Style::new().fg(ansi::BrightRed).const_into_runtime_style(),
+            fields: Style::new().fg(ansi::BrightCyan).const_into_runtime_style(),
+        };
+
+        NEW
     }
 
     // XXX same as with `light` in `color_eyre`
     /// A theme for a light background
-    pub fn light() -> Self {
-        Self {
-            file: style().purple(),
-            line_number: style().purple(),
-            target: style().red(),
-            fields: style().blue(),
-            active_line: style().bold(),
-        }
+    pub const fn light() -> Self {
+        const NEW: Theme = Theme {
+            file: Style::new()
+                .fg(ansi::BrightMagenta)
+                .const_into_runtime_style(),
+            line_number: Style::new()
+                .fg(ansi::BrightMagenta)
+                .const_into_runtime_style(),
+            active_line: Style::new().fg(ansi::Red).const_into_runtime_style(),
+            target: Style::new().fg(ansi::Blue).const_into_runtime_style(),
+            fields: Style::new().bold().const_into_runtime_style(),
+        };
+
+        NEW
     }
 
     /// Styles printed paths
@@ -160,6 +181,12 @@ impl Theme {
     pub fn active_line(mut self, style: Style) -> Self {
         self.active_line = style;
         self
+    }
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -271,17 +298,16 @@ impl Frame<'_> {
     fn print_header(&self, i: u32, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{:>2}: {}{}{}",
+            "{:>2}: {}",
             i,
-            self.theme.target.style(self.metadata.target()),
-            self.theme.target.style("::"),
-            self.theme.target.style(self.metadata.name()),
+            format_args!("{}::{}", self.metadata.target(), self.metadata.name())
+                .style_with(self.theme.target),
         )
     }
 
     fn print_fields(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.fields.is_empty() {
-            write!(f, " with {}", self.theme.fields.style(self.fields))?;
+            write!(f, " with {}", self.fields.style_with(self.theme.fields))?;
         }
 
         Ok(())
@@ -296,8 +322,8 @@ impl Frame<'_> {
             write!(
                 f,
                 "\n    at {}:{}",
-                self.theme.file.style(file),
-                self.theme.line_number.style(lineno),
+                file.style_with(self.theme.file),
+                lineno.style_with(self.theme.line_number),
             )?;
         } else {
             write!(f, "\n    at <unknown source file>")?;
@@ -334,7 +360,7 @@ impl Frame<'_> {
                     cur_line_no.to_string(),
                     line.unwrap()
                 )?;
-                write!(f, "\n{}", self.theme.active_line.style(&buf))?;
+                write!(f, "\n{}", buf.style_with(self.theme.active_line))?;
                 buf.clear();
             } else {
                 write!(f, "\n{:>8} │ {}", cur_line_no, line.unwrap())?;

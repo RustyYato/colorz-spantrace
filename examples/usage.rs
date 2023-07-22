@@ -7,7 +7,7 @@ fn main() {
     Registry::default().with(ErrorLayer::default()).init();
 
     let span_trace = one(42);
-    println!("{}", color_spantrace::colorize(&span_trace));
+    println!("{}", colorz_spantrace::colorize(&span_trace));
 }
 
 #[instrument]

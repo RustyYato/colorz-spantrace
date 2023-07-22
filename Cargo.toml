@@ -14,7 +14,7 @@ readme = "README.md"
 [dependencies]
 tracing-error = "0.2.0"
 tracing-core = "0.1.21"
-colorz = "1.1.1"
+colorz = "1.1.2"
 once_cell = "1.4.1"
 
 [dev-dependencies]

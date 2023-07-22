@@ -1,5 +1,5 @@
 [package]
-name = "color-spantrace"
+name = "colorz-spantrace"
 version = "0.2.0"
 authors = ["Jane Lusby <jlusby@yaah.dev>"]
 edition = "2018"

@@ -135,7 +135,7 @@ impl Theme {
         NEW
     }
 
-    // XXX same as with `light` in `color_eyre`
+    // XXX same as with `light` in `colorz_eyre`
     /// A theme for a light background
     pub const fn light() -> Self {
         const NEW: Theme = Theme {
